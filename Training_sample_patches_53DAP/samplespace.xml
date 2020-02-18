@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sample-space>
+	<sample-info size="32" channels="3" data-type="unsigned 8 bit"></sample-info>
+	<class-mapping>
+		<class id="0">Weed</class>
+		<class id="1">bare soil</class>
+		<class id="2">Rapeseed leaves</class>
+	</class-mapping>
+</sample-space>

@@ -1,0 +1,176 @@
+Thanks for your interest in our study. 
+
+We present the CNN workflow based on 53DAP data with 32-pixel patch size, the uploaded training sample patches were from this case. 
+
+We hope you can use our training sample patches to train a CNN model or you can conduct the entire procedure following the steps:
+
+I) Using our training sample patches to train a CNN model
+Step1: New a project and add data to eCognition
+In this part, you can just add the testing plots. 
+Data included: 
+	Testing sample plot_A02 (RGB, TIFF formate). Assigning its 3 bands as TeRA, TeGA, TeBA. 
+	Testing sample plot_B03 (RGB, TIFF formate). Assigning its 3 bands as TeRB, TeGB, TeBB. 
+	Annovated leaves for Testing plot_A02 (.shp). Assigning it as TeALeaves.
+	Annovated leaves for Testing plot_B03 (.shp). Assigning it as TeBLeaves.
+
+Step2: Load the workflow rule file in Process Tree.
+	The rule file was "CNN_in_eCognition_process_tree_workflow.dcp". 
+
+Step3: Following configuration bellow to add the algorithm in sub-rule portion named CNN. 
+	I. In Child branch - Create the CNN structure
+		Right Click Add algorithm here, and select Append New
+		Find and select the algorithm "create convolutional neural network" in Algorithm
+		Enter the parameter of the algorithm and execute.
+		sample patch size: 32, 
+		classes: rapeseed leaves, weed, bare soil,
+		2 hidden layers - 5 kernel size, 12 feature maps, using max pooling
+
+	II. In Child branch - Train the CNN
+		Right Click Add algorithm here, and select Append New
+		Find and select the algorithm "train convolutional neural network" in Algorithm
+		Enter the parameter of the algorithm and execute.
+		chose the downloaded sample patch folder in your local directory 
+		(...\Rapeseed_seedlings_counting\Training_sample_patches_53DAP)
+		learning rate: 0.0004
+
+Step4: Apply CNN to test sample plots, using sample plot_A02 as example:
+	I. In Child branch - Apply CNN to TestMapA02
+		Right Click Add algorithm here, and select Append New
+		Find and select the algorithm "apply convolutional neural network" in Algorithm
+		Change the parameter of map from "From Parent" to "main"
+		Enter the parameter of the algorithm and execute.
+			Input Image layers - TeRA, TeGA, TeBA
+			Output Class - Rapeseed leaves,
+			Output Layer - Leafheatmap 
+
+	II. In Child branch - Local maximal value
+		Right Click Add algorithm here, and select Append New
+		Find and select the algorithm "pixel filter 2D (openCV, prototype)" in Algorithm
+		Change the parameter of map from "From Parent" to "main"
+		Enter the parameter of the algorithm and execute.	
+			Filter - Gaussian
+			Input layer - Leafheatmap
+			Output layer - SmoothMap
+
+		Right Click the latest runned algorithm, and select Append New
+		Find and select the algorithm "pixel filter 2D (openCV, prototype)" in Algorithm
+		Change the parameter of map from "From Parent" to "main"
+		Enter the parameter of the algorithm and execute.	
+			Filter - morphology
+			Input layer - SmoothMap
+			Output layer - localMax
+			Operation - dilate
+			Iterations - 5
+
+		Right Click the latest runned algorithm, and select Append New
+		Find and select the algorithm "layer arithmetics" in Algorithm
+		Change the parameter of map from "From Parent" to "main"
+		Enter the parameter of the algorithm and execute.	
+			Output value - "(SmoothMap=localMax&(localMax>0.65))*SmoothMap"
+			Output layer - segmentalMap
+			Output layer type - 32Bit float
+
+		Right Click the latest runned algorithm, and select Append New
+		Find and select the algorithm "multi-threshold segmentation" in Algorithm
+		Change the parameter of map from "From Parent" to "main"
+		Enter the parameter of the algorithm and execute.	
+			Level Name - Local max
+			Image Layer - segmentalMap
+			Class 1 - unclassified
+			Threshold 1 - 0.65
+			Class 2 - rapeseed leaves
+
+Overlapping with the annovated shapefile:
+		VIEW--->Vector Layer Mixing--->enable the TeALeaves thematic layer.
+
+
+
+II) conducting the entire procedure
+
+Step1: New a project and add data to eCognition
+Data included: 
+	Training sample plots (RGB, TIFF formate). Assigning its 3 bands as R, G, B. 
+	Testing sample plot_A02 (RGB, TIFF formate). Assigning its 3 bands as TeRA, TeGA, TeBA. 
+	Testing sample plot_B03 (RGB, TIFF formate). Assigning its 3 bands as TeRB, TeGB, TeBB. 
+	Annovated leaves for Training sample plots (.shp). Assigning it as Leaves.
+	Annovated leaves for Testing plot_A02 (.shp). Assigning it as TeALeaves.
+	Annovated leaves for Testing plot_B03 (.shp). Assigning it as TeBLeaves.
+
+Step2: Load the workflow rule file in Process Tree.
+	The rule file was "CNN_in_eCognition_process_tree_workflow.dcp". 
+
+Step3: Run the sub-rule portion named Before CNN.
+
+Step4: Following configuration bellow to add the algorithm in sub-rule portion named CNN. 
+	I. In Child branch - Generate Labeled sample patches
+		Right Click Add algorithm here, and select Append New
+		Find and select the algorithm "generate labeled sample patches" in Algorithm
+		Enter the parameter of the algorithm and execute.
+		In this study, generate 3 classes, and number of sample patches:
+		rapeseed leaf (4000), weeds (2000), bare soil (2000)
+		The input image laryer must to be R, G, B.
+
+	II. In Child branch - Create the CNN structure
+		Right Click Add algorithm here, and select Append New
+		Find and select the algorithm "create convolutional neural network" in Algorithm
+		Enter the parameter of the algorithm and execute.
+		sample patch size: 32, 
+		classes: rapeseed leaves, weed, bare soil,
+		2 hidden layers - 5 kernel size, 12 feature maps, using max pooling
+
+	III. In Child branch - Train the CNN
+		Right Click Add algorithm here, and select Append New
+		Find and select the algorithm "train convolutional neural network" in Algorithm
+		Enter the parameter of the algorithm and execute.
+		chose the downloaded sample patch folder in your local directory 
+		(...\Rapeseed_seedlings_counting\Training_sample_patches_53DAP)
+		learning rate: 0.0004
+
+Step5: Apply CNN to test sample plots, using sample plot_A02 as example:
+	I. Run the Clid branch - Define Map_A02.
+		After the processing of this branch, change the Layer by VIEW --> Image Layer Mixing, 
+		and then assign TeRA to channel R, TeGA to channel G, TeBA to channel B, click OK
+
+	II. In Child branch - Apply CNN to TestMapA02
+		Right Click Add algorithm here, and select Append New
+		Find and select the algorithm "apply convolutional neural network" in Algorithm
+		Enter the parameter of the algorithm and execute.
+			Input Image layers - TeRA, TeGA, TeBA
+			Output Class - Rapeseed leaves,
+			Output Layer - Leafheatmap 
+
+	III. In Child branch - Local maximal value
+		Right Click Add algorithm here, and select Append New
+		Find and select the algorithm "pixel filter 2D (openCV, prototype)" in Algorithm
+		Enter the parameter of the algorithm and execute.	
+			Filter - Gaussian
+			Input layer - Leafheatmap
+			Output layer - SmoothMap
+
+		Right Click the latest runned algorithm, and select Append New
+		Find and select the algorithm "pixel filter 2D (openCV, prototype)" in Algorithm
+		Enter the parameter of the algorithm and execute.	
+			Filter - morphology
+			Input layer - SmoothMap
+			Output layer - localMax
+			Operation - dilate
+			Iterations - 5
+
+		Right Click the latest runned algorithm, and select Append New
+		Find and select the algorithm "layer arithmetics" in Algorithm
+		Enter the parameter of the algorithm and execute.	
+			Output value - "(SmoothMap=localMax&(localMax>0.65))*SmoothMap"
+			Output layer - segmentalMap
+			Output layer type - 32Bit float
+
+		Right Click the latest runned algorithm, and select Append New
+		Find and select the algorithm "multi-threshold segmentation" in Algorithm
+		Enter the parameter of the algorithm and execute.	
+			Level Name - Local max
+			Image Layer - segmentalMap
+			Class 1 - unclassified
+			Threshold 1 - 0.65
+			Class 2 - rapeseed leaves            
+
+Overlapping with the annovated shapefile:
+		VIEW--->Vector Layer Mixing--->enable the TeALeaves thematic layer.
