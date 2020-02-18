@@ -1,0 +1,1 @@
+C:/Users/Beqaaa/Rapeseed_seedling_counting/Training_sample_plots/*.tif filter=lfs diff=lfs merge=lfs -text
