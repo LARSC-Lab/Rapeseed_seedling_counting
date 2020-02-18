@@ -2,6 +2,11 @@ Thanks for your interest in our study.
 
 We present the CNN workflow based on 53DAP data with 32-pixel patch size, the uploaded training sample patches were from this case. 
 
+In folder "training_sample_patches_53DAP", there are 3 folders storing the sample patches:
+	0 - weed
+	1 - bare soil
+	2 - rapeseed leaf
+
 We hope you can use our training sample patches to train a CNN model or you can conduct the entire procedure following the steps:
 
 I) Using our training sample patches to train a CNN model
